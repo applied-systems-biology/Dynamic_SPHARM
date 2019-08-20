@@ -92,7 +92,9 @@ def compare_parameters(item, inputfile, folder_accuracy, group='Group', paramete
             for C in [0.1, 1., 10., 100., 1000.]:
                 if grouped:
                     curaccuracy = classification.predict_group_shuffle_split(features, classes, C=C,
-                                                                             nsplits=100, test_size=1, groups=samples,
+                                                                             nsplits=100,
+                                                                             test_size=len(np.unique(classes)),
+                                                                             groups=samples,
                                                                              random_state=0)
                 else:
                     curaccuracy = classification.predict_shuffle_split(features, classes, C=C,
