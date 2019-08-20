@@ -41,6 +41,8 @@ def compare_parameters_parallel(cutoffs, timelengths, rotation_invariant, **kwar
                     items.append([cutoff, static, dynamic_features, timelength,
                                   static_feature, rotation_invariant])
 
+    kwargs['stat'] = pd.read_csv(kwargs.pop('inputfile'), sep='\t', index_col=0)
+
     if kwargs.pop('debug', False) is True:
         kwargs['item'] = items[0]
         kwargs.pop('max_threads')
@@ -53,7 +55,7 @@ def compare_parameters_parallel(cutoffs, timelengths, rotation_invariant, **kwar
     filelib.combine_statistics(kwargs.get('folder_accuracy'))
 
 
-def compare_parameters(item, inputfile, folder_accuracy, group='Group', parameters=False,
+def compare_parameters(item, stat, folder_accuracy, group='Group',
                        id_col='TrackID', grouped=False):
     filelib.make_folders([folder_accuracy])
 
@@ -65,29 +67,22 @@ def compare_parameters(item, inputfile, folder_accuracy, group='Group', paramete
                    'Static_features': static_features,
                    'Rotation_invariant': rotation_invariant})
 
-    if parameters:
-        files = os.listdir(inputfile)
-    else:
-        files = ['']
-
-    for fn in files:
-        outputfile = folder_accuracy + fn
-        for key in params.keys():
-            outputfile += key + '=' + str(params[key]) + '_'
-        if not os.path.exists(outputfile[:-1] + '.csv'):
-            stat = pd.read_csv(inputfile + fn, sep='\t', index_col=0)
-            if cutoff is not None:
-                stat = stat[stat['degree'] <= cutoff]
-            features, classes, \
-            names, groups, samples = classification.extract_features(stat,
-                                                                     cell_id=id_col,
-                                                                     group=group,
-                                                                     static=static,
-                                                                     dynamic_features=dynamic_features,
-                                                                     timelength=timelength,
-                                                                     static_features=static_features,
-                                                                     rotation_invariant=rotation_invariant)[:]
-
+    outputfile = folder_accuracy
+    for key in params.keys():
+        outputfile += key + '=' + str(params[key]) + '_'
+    if not os.path.exists(outputfile[:-1] + '.csv'):
+        if cutoff is not None:
+            stat = stat[stat['degree'] <= cutoff]
+        features, classes, \
+        names, groups, samples = classification.extract_features(stat,
+                                                                 cell_id=id_col,
+                                                                 group=group,
+                                                                 static=static,
+                                                                 dynamic_features=dynamic_features,
+                                                                 timelength=timelength,
+                                                                 static_features=static_features,
+                                                                 rotation_invariant=rotation_invariant)[:]
+        if len(samples) > 0:
             accuracy = pd.DataFrame()
             for C in [0.1, 1., 10., 100., 1000.]:
                 if grouped:
@@ -242,13 +237,7 @@ if len(args) > 0:
             id_col = 'TrackID'
             grouped = True
 
-        if len(path.split('parameters')) > 1:
-            parameters = True
-            inputfile = path + 'spharm/gridsize=' + str(gridsize) + '_parameters/'
-        else:
-            parameters = False
-            inputfile = path + 'spharm/gridsize=' + str(gridsize) + '.csv'
-
+        inputfile = path + 'spharm/gridsize=' + str(gridsize) + '.csv'
         rotation_invariant = True
 
         compare_parameters_parallel(inputfile=inputfile,
@@ -256,7 +245,6 @@ if len(args) > 0:
                                     cutoffs=[3, 5, 10, 20, 30, 40, 50, None],
                                     timelengths=[5, 10, 20, 30, 50, 81],
                                     max_threads=20,
-                                    parameters=parameters,
                                     id_col=id_col,
                                     rotation_invariant=rotation_invariant,
                                     debug=False, grouped=grouped)

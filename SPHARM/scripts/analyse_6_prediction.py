@@ -89,8 +89,8 @@ def predict_classes_pairwise(features, classes, groups, samples, C):
                 unique_train_classes = np.unique(train_classes)
                 n_observations = ndimage.sum(np.ones_like(train_classes), train_classes, unique_train_classes)
                 predicted_classes = np.ones_like(classes[test])*unique_train_classes[np.argmax(n_observations)]
-                curaccuracy = pd.DataFrame({'Accuracy': np.sum(np.where(classes[test] == predicted_classes, 1, 0))
-                                                        / len(predicted_classes),
+                curaccuracy = pd.DataFrame({'Accuracy': [np.sum(np.where(classes[test] == predicted_classes, 1, 0))
+                                                        / len(predicted_classes)],
                                             'Comparison': 'Control',
                                             'Pair': class_names[0] + ' vs ' + class_names[1]})
                 accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
