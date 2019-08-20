@@ -201,20 +201,14 @@ def plot_accuracy_selected(inputfile, outputfolder):
         plt.savefig(outputfolder + 'Dynamic_' + dyn + '.svg')
         plt.close()
 
-    summary = curstat.groupby(['C', 'Dynamic features', 'Cutoff']).mean().reset_index()
-    summary = summary.sort_values(['Accuracy'], ascending=False)
-    C = summary.iloc[0]['C']
-    cutoff = 50
-    curstat = curstat[(curstat['C'] == C) & (curstat['Cutoff'] == cutoff)]
     plt.figure(figsize=(3, 4))
-    sns.boxplot(x='Time length', y='Accuracy', hue='Dynamic_features', data=curstat, palette=palette)
+    sns.boxplot(x='Time length', y='Accuracy', hue='Dynamic_features', data=stat, palette=palette)
     sns.despine()
     plt.xlabel('Time length (frames)')
     margins = {'left': 0.22, 'right': 0.95, 'top': 0.9, 'bottom': 0.13}
     plt.subplots_adjust(**margins)
-    plt.title('C = ' + str(C) + ', Cutoff = ' + str(cutoff))
-    plt.savefig(outputfolder + 'Dynamic_C=' + str(C) + '_cutoff=' + str(cutoff) + '.png')
-    plt.savefig(outputfolder + 'Dynamic_C=' + str(C) + '_cutoff=' + str(cutoff) + '.svg')
+    plt.savefig(outputfolder + 'Dynamic_Timelength.png')
+    plt.savefig(outputfolder + 'Dynamic_Timelength.svg')
     plt.close()
 
 
