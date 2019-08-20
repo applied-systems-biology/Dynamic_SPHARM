@@ -6,10 +6,12 @@ import numpy as np
 import seaborn as sns
 import pylab as plt
 from scipy.stats import ranksums
+from scipy import ndimage
 
 import mkl
 from SPHARM.lib import classification
 from SPHARM.lib.confusion_matrix_pretty_print import plot_confusion_matrix_from_data
+from SPHARM.classes.stratified_group_shuffle_split import GroupShuffleSplitStratified
 from helper_lib import filelib
 
 import warnings
@@ -27,6 +29,82 @@ def pvalue_to_star(pvalue, sym='*'):
         return sym
     else:
         return ''
+
+
+def predict_classes_pairwise(features, classes, groups, samples, C):
+    accuracy = pd.DataFrame()
+    class_names = np.unique(groups)
+
+    if grouped:
+        curaccuracy = classification.predict_group_shuffle_split(features, classes, C=C,
+                                                                 nsplits=150,
+                                                                 test_size=len(np.unique(classes)),
+                                                                 groups=samples,
+                                                                 random_state=0)
+    else:
+        curaccuracy = classification.predict_shuffle_split(features, classes, C=C,
+                                                           nsplits=150, test_size=2./7, random_state=0)
+
+    curaccuracy['Comparison'] = class_names[0] + ' vs ' + class_names[1]
+    curaccuracy['Pair'] = class_names[0] + ' vs ' + class_names[1]
+    accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+
+    unique_classes = np.unique(classes)
+    n_samples = [np.sum(np.where(classes == unique_classes[0], 1, 0)),
+                 np.sum(np.where(classes == unique_classes[1], 1, 0))]
+    n_samples.sort()
+    if n_samples[0] < 0.4 * np.sum(n_samples):
+        balanced = False
+    else:
+        balanced = True
+
+    if grouped:
+        unique_groups = np.unique(samples)
+        group_classes = []
+        for gr in unique_groups:
+            group_classes.append(classes[np.where(samples==gr)[0][0]])
+
+        if balanced:
+            for i_shuffles in range(15):
+                np.random.shuffle(group_classes)
+                shuffled_classes = np.zeros_like(classes)
+                for igr, gr in enumerate(unique_groups):
+                    ind = np.where(samples == gr)
+                    shuffled_classes[ind] = group_classes[igr]
+
+                curaccuracy = classification.predict_group_shuffle_split(features, shuffled_classes, C=C,
+                                                                         nsplits=10,
+                                                                         test_size=len(np.unique(shuffled_classes)),
+                                                                         groups=samples,
+                                                                         random_state=0)
+
+                curaccuracy['Comparison'] = 'Control'
+                curaccuracy['Pair'] = class_names[0] + ' vs ' + class_names[1]
+                accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+
+        else:
+            cv = GroupShuffleSplitStratified(n_splits=150, test_size=len(np.unique(classes)), random_state=0)
+            for train, test in cv.split(X=features, y=classes, groups=samples):
+                train_classes = classes[train]
+                unique_train_classes = np.unique(train_classes)
+                n_observations = ndimage.sum(np.ones_like(train_classes), train_classes, unique_train_classes)
+                predicted_classes = np.ones_like(classes[test])*unique_train_classes[np.argmax(n_observations)]
+                curaccuracy = pd.DataFrame({'Accuracy': np.sum(np.where(classes[test] == predicted_classes, 1, 0))
+                                                        / len(predicted_classes),
+                                            'Comparison': 'Control',
+                                            'Pair': class_names[0] + ' vs ' + class_names[1]})
+                accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+
+    else:
+        shuffled_classes = classes.copy()
+        np.random.shuffle(shuffled_classes)
+        curaccuracy = classification.predict_shuffle_split(features, shuffled_classes, C=C,
+                                                           nsplits=50, test_size=2./7, random_state=0)
+        curaccuracy['Comparison'] = 'Control'
+        curaccuracy['Pair'] = 'Control'
+        accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+
+    return accuracy
 
 
 def predict_classes(folder_accuracy, folder_predicted, inputfile=None, stat=None, group='Group',
@@ -55,70 +133,17 @@ def predict_classes(folder_accuracy, folder_predicted, inputfile=None, stat=None
 
     predicted['Name'] = names
     predicted[group] = groups
+
     print('Prediction pairwise')
     accuracy = pd.DataFrame()
     if len(np.unique(classes)) > 2:
         for cl in np.unique(classes):
             ind = np.where(classes != cl)
-            class_names = np.unique(groups[ind])
-
-            if grouped:
-                curaccuracy = classification.predict_group_shuffle_split(features[ind], classes[ind], C=C,
-                                                                         nsplits=150, test_size=1, groups=samples[ind],
-                                                                         random_state=0)
-            else:
-                curaccuracy = classification.predict_shuffle_split(features[ind], classes[ind], C=C,
-                                                                   nsplits=150, test_size=2./7, random_state=0)
-
-            curaccuracy['Comparison'] = class_names[0] + ' vs ' + class_names[1]
+            curaccuracy = predict_classes_pairwise(features[ind], classes[ind], groups[ind], samples[ind], C)
             accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+
     else:
-        class_names = np.unique(groups)
-
-        if grouped:
-            curaccuracy = classification.predict_group_shuffle_split(features, classes, C=C,
-                                                                     nsplits=150, test_size=1, groups=samples,
-                                                                     random_state=0)
-        else:
-            curaccuracy = classification.predict_shuffle_split(features, classes, C=C,
-                                                               nsplits=150, test_size=2./7, random_state=0)
-
-        curaccuracy['Comparison'] = class_names[0] + ' vs ' + class_names[1]
-        accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
-
-    print('Prediction mock')
-    for cl in np.unique(classes):  # total number of comparisons = 150 = 3 classes x 5 iterations x 10 splits
-        ind = np.where(classes == cl)
-
-        curfeatures = features[ind]
-
-        if grouped:
-            cursamples = samples[ind]
-            unique_groups = np.unique(cursamples)
-            for i_iter in range(5):
-                group_ind = np.random.choice(len(unique_groups), int(len(unique_groups)/2), replace=False)
-
-                curclasses = np.zeros(len(cursamples))
-                for i in group_ind:
-                    curclasses[np.where(cursamples == unique_groups[i])] = 1
-
-                curaccuracy = classification.predict_group_shuffle_split(curfeatures, curclasses, C=C, nsplits=10,
-                                                                         test_size=1, groups=cursamples,
-                                                                         random_state=0)
-                curaccuracy['Comparison'] = 'Control'
-                accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
-
-        else:
-            for i_iter in range(5):
-                group_ind = np.random.choice(len(curfeatures), int(len(curfeatures)/2), replace=False)
-
-                curclasses = np.zeros(len(curfeatures))
-                curclasses[group_ind] = 1
-
-                curaccuracy = classification.predict_shuffle_split(curfeatures, curclasses, C=C, nsplits=10,
-                                                                   test_size=2./7, random_state=0)
-                curaccuracy['Comparison'] = 'Control'
-                accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+        accuracy = predict_classes_pairwise(features, classes, groups, samples, C)
 
     kwargs['Static'] = static
     kwargs['C'] = C
@@ -138,7 +163,6 @@ def plot_confusion_matrix(inputfolder, outputfolder):
     files = filelib.list_subfolders(inputfolder, extensions=['csv'])
     for fn in files:
         stat = pd.read_csv(inputfolder + fn, sep='\t', index_col=0)
-        # stat = stat.sort_values('Group')
         classes = stat['Group'].unique()
         cl_frame = pd.DataFrame({'Class name': classes})
         for i in range(len(cl_frame)):
@@ -170,52 +194,58 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
                  & (stat['dynamic_features'] == 'frequency')].index, 'Features'] = 'Dynamic\n frequency'
 
     stat = stat.sort_values(['Features', 'Comparison'], ascending=False)
-    plt.figure(figsize=(4, 4))
-    margins = {'left': 0.2, 'right': 0.95, 'top': 0.9, 'bottom': 0.13}
-    plt.subplots_adjust(**margins)
-    sns.boxplot(x='Features', y='Accuracy', hue='Comparison', data=stat, palette='Set1')
-    sns.despine()
-    plt.xlabel('')
-    ncomparisons = len(stat['Comparison'].unique())
 
-    for ifeatures, feature in enumerate(stat['Features'].unique()):
-        curstat = stat[stat['Features'] == feature]
-        control_stat = curstat[curstat['Comparison'] == 'Control']['Accuracy']
-        for icomparison, comparison in enumerate(stat['Comparison'].unique()):
+    for pair in stat['Pair'].unique():
+        pair_stat = stat[stat['Pair'] == pair]
+
+        plt.figure(figsize=(4, 4))
+        margins = {'left': 0.2, 'right': 0.95, 'top': 0.9, 'bottom': 0.13}
+        plt.subplots_adjust(**margins)
+        sns.boxplot(x='Features', y='Accuracy', hue='Comparison', data=pair_stat, palette='Set1')
+        sns.despine()
+        plt.xlabel('')
+        ncomparisons = len(stat['Comparison'].unique())
+
+        for ifeatures, feature in enumerate(pair_stat['Features'].unique()):
+            curstat = pair_stat[pair_stat['Features'] == feature]
+            control_stat = curstat[curstat['Comparison'] == 'Control']['Accuracy']
+            for icomparison, comparison in enumerate(stat['Comparison'].unique()):
+                if comparison != 'Control':
+                    teststat = curstat[curstat['Comparison'] == comparison]['Accuracy']
+                    pval = ranksums(control_stat, teststat)[1]
+                    boxwidth = 0.8 / ncomparisons
+                    xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
+                    plt.text(xpos, np.max(teststat) * 1.02, pvalue_to_star(pval), family='sans-serif', fontsize=8,
+                             horizontalalignment='center', verticalalignment='bottom', color='black')
+
+        for icomparison, comparison in enumerate(pair_stat['Comparison'].unique()):
             if comparison != 'Control':
-                teststat = curstat[curstat['Comparison'] == comparison]['Accuracy']
-                pval = ranksums(control_stat, teststat)[1]
-                boxwidth = 0.8/ncomparisons
-                xpos = ifeatures - boxwidth*ncomparisons/2 + boxwidth/2 + icomparison*boxwidth
-                plt.text(xpos, np.max(teststat)*1.02, pvalue_to_star(pval), family='sans-serif', fontsize=8,
-                         horizontalalignment='center', verticalalignment='bottom', color='black')
+                curstat = pair_stat[pair_stat['Comparison'] == comparison]
+                control_stat = curstat[curstat['Features'] == 'Static']['Accuracy']
+                for ifeatures, feature in enumerate(stat['Features'].unique()):
+                    teststat = curstat[curstat['Features'] == feature]['Accuracy']
+                    if np.mean(teststat) > 0.55:
+                        pval = ranksums(control_stat, teststat)[1]
+                        boxwidth = 0.8 / ncomparisons
+                        xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
+                        plt.text(xpos, np.max(teststat) * 1.06, pvalue_to_star(pval, sym='$'), family='sans-serif',
+                                 fontsize=5,
+                                 horizontalalignment='center', verticalalignment='bottom', color='black')
 
-    for icomparison, comparison in enumerate(stat['Comparison'].unique()):
-        if comparison != 'Control':
-            curstat = stat[stat['Comparison'] == comparison]
-            control_stat = curstat[curstat['Features'] == 'Static']['Accuracy']
-            for ifeatures, feature in enumerate(stat['Features'].unique()):
-                teststat = curstat[curstat['Features'] == feature]['Accuracy']
+                control_stat = curstat[curstat['Features'] == 'Dynamic\n time']['Accuracy']
+                teststat = curstat[curstat['Features'] == 'Dynamic\n frequency']['Accuracy']
+                ifeatures = 2
                 if np.mean(teststat) > 0.55:
                     pval = ranksums(control_stat, teststat)[1]
                     boxwidth = 0.8 / ncomparisons
                     xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
-                    plt.text(xpos, np.max(teststat)*1.06, pvalue_to_star(pval, sym='$'), family='sans-serif', fontsize=5,
+                    plt.text(xpos, np.max(teststat) * 1.1, pvalue_to_star(pval, sym='#'), family='sans-serif',
+                             fontsize=5,
                              horizontalalignment='center', verticalalignment='bottom', color='black')
 
-            control_stat = curstat[curstat['Features'] == 'Dynamic\n time']['Accuracy']
-            teststat = curstat[curstat['Features'] == 'Dynamic\n frequency']['Accuracy']
-            ifeatures = 2
-            if np.mean(teststat) > 0.55:
-                pval = ranksums(control_stat, teststat)[1]
-                boxwidth = 0.8/ncomparisons
-                xpos = ifeatures - boxwidth*ncomparisons/2 + boxwidth/2 + icomparison*boxwidth
-                plt.text(xpos, np.max(teststat)*1.1, pvalue_to_star(pval, sym='#'), family='sans-serif', fontsize=5,
-                         horizontalalignment='center', verticalalignment='bottom', color='black')
-
-    plt.savefig(outputfolder + 'accuracy_pairwise_comparison.png', dpi=300)
-    plt.savefig(outputfolder + 'accuracy_pairwise_comparison.svg')
-    plt.close()
+        plt.savefig(outputfolder + 'accuracy_pairwise_comparison_' + pair + '.png', dpi=300)
+        plt.savefig(outputfolder + 'accuracy_pairwise_comparison_' + pair + '.svg')
+        plt.close()
 
 
 gridsize = 120
@@ -243,24 +273,24 @@ if len(args) > 0:
             timelength = 10
             grouped = True
 
-        # stat = pd.read_csv(inputfile, sep='\t', index_col=0)
+        stat = pd.read_csv(inputfile, sep='\t', index_col=0)
 
-        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
-        #                 dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
-        #                 rotation_invariant=True, C=C, grouped=grouped)
-        #
-        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-        #                 dynamic_features='frequency', timelength=timelength, one_time_point=None,
-        #                 static_features='amplitude', rotation_invariant=True, C=C, grouped=grouped)
-        #
-        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-        #                 dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
-        #                 rotation_invariant=True, C=C, grouped=grouped)
+        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
+                        dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
+                        rotation_invariant=True, C=C, grouped=grouped)
 
-        # plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
+        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+                        dynamic_features='frequency', timelength=timelength, one_time_point=None,
+                        static_features='amplitude', rotation_invariant=True, C=C, grouped=grouped)
+
+        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+                        dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
+                        rotation_invariant=True, C=C, grouped=grouped)
+
+        plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
         plot_accuracy_pairwise(path + 'prediction_accuracy/', path + 'accuracy_plots/')
 
 
