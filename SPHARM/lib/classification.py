@@ -7,10 +7,10 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import GroupShuffleSplit
 
 from SPHARM.classes.spectrum import Spectrum
 from SPHARM.classes.time_spectrum import TimeSpectrum
+from SPHARM.classes.stratified_group_shuffle_split import GroupShuffleSplitStratified
 
 
 def extract_features(input_stat, cell_id='Name', group='Group', static=True, dynamic_features=None,
@@ -265,7 +265,7 @@ def predict_group_shuffle_split(features, classes, C=1, nsplits=100, test_size=1
     """
 
     clf = svm.SVC(kernel='linear', C=C, cache_size=1000, decision_function_shape='ovo', random_state=0)
-    cv = GroupShuffleSplit(n_splits=nsplits, test_size=test_size, random_state=random_state)
+    cv = GroupShuffleSplitStratified(n_splits=nsplits, test_size=test_size, random_state=random_state)
     accuracy = pd.DataFrame({'Accuracy': cross_val_score(clf, X=features, y=classes, groups=groups, cv=cv)})
     return accuracy
 
