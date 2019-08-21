@@ -97,12 +97,13 @@ def predict_classes_pairwise(features, classes, groups, samples, C):
 
     else:
         shuffled_classes = classes.copy()
-        np.random.shuffle(shuffled_classes)
-        curaccuracy = classification.predict_shuffle_split(features, shuffled_classes, C=C,
-                                                           nsplits=50, test_size=2./7, random_state=0)
-        curaccuracy['Comparison'] = 'Control'
-        curaccuracy['Pair'] = 'Control'
-        accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
+        for i_shuffles in range(5):
+            np.random.shuffle(shuffled_classes)
+            curaccuracy = classification.predict_shuffle_split(features, shuffled_classes, C=C,
+                                                               nsplits=10, test_size=2./7, random_state=0)
+            curaccuracy['Comparison'] = 'Control'
+            curaccuracy['Pair'] = 'Control'
+            accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
 
     return accuracy
 
