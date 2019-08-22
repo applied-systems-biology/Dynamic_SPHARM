@@ -237,7 +237,7 @@ if len(args) > 0:
         compare_parameters_parallel(inputfile=inputfile,
                                     folder_accuracy=path + 'cross_validation_accuracy/',
                                     cutoffs=[3, 5, 10, 20, 30, 40, 50, None],
-                                    timelengths=[5, 10, 20, 30, 50, 81],
+                                    timelengths=[5, 10, 20, 30, 50, 80],
                                     max_threads=20,
                                     id_col=id_col,
                                     rotation_invariant=rotation_invariant,
