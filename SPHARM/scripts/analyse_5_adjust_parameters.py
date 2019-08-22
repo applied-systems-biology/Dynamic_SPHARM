@@ -41,7 +41,7 @@ def compare_parameters_parallel(cutoffs, timelengths, rotation_invariant, **kwar
                     items.append([cutoff, static, dynamic_features, timelength,
                                   static_feature, rotation_invariant])
 
-    kwargs['stat'] = pd.read_csv(kwargs.pop('inputfile'), sep='\t', index_col=0)
+    kwargs['inputstat'] = pd.read_csv(kwargs.pop('inputfile'), sep='\t', index_col=0)
 
     if kwargs.pop('debug', False) is True:
         kwargs['item'] = items[0]
@@ -55,7 +55,7 @@ def compare_parameters_parallel(cutoffs, timelengths, rotation_invariant, **kwar
     filelib.combine_statistics(kwargs.get('folder_accuracy'))
 
 
-def compare_parameters(item, stat, folder_accuracy, group='Group',
+def compare_parameters(item, inputstat, folder_accuracy, group='Group',
                        id_col='TrackID', grouped=False):
     filelib.make_folders([folder_accuracy])
 
@@ -72,7 +72,9 @@ def compare_parameters(item, stat, folder_accuracy, group='Group',
         outputfile += key + '=' + str(params[key]) + '_'
     if not os.path.exists(outputfile[:-1] + '.csv'):
         if cutoff is not None:
-            stat = stat[stat['degree'] <= cutoff]
+            stat = inputstat[inputstat['degree'] <= cutoff]
+        else:
+            stat = inputstat
         features, classes, \
         names, groups, samples = classification.extract_features(stat,
                                                                  cell_id=id_col,
