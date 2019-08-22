@@ -36,7 +36,7 @@ if len(args) > 0:
             prl.run_parallel(process=spharm.convert_to_tiff, inputfolder=path + 'coordinates/',
                              outputfolder=path + 'output/stacks/', extensions=['*'], debug=False, combine=False,
                              exclude=['config.xml', 'log.csv', 'runanalysis.csv',
-                                      'runstatistics.csv', 'shapeanalysis.csv'],
+                                      'runstatistics.csv', 'shapeanalysis.csv', 'tissue.csv'],
                              **kwargs)
 
             path = path + 'output/'
