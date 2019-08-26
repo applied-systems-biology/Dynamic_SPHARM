@@ -204,7 +204,7 @@ def plot_accuracy_selected(inputfile, outputfolder):
         plt.close()
 
     plt.figure(figsize=(3, 4))
-    sns.boxplot(x='Time length', y='Accuracy', hue='Dynamic_features', data=stat, palette=palette)
+    sns.boxplot(x='Time length', y='Accuracy', hue='Dynamic_features', data=curstat, palette=palette)
     sns.despine()
     plt.xlabel('Time length (frames)')
     margins = {'left': 0.22, 'right': 0.95, 'top': 0.9, 'bottom': 0.13}
