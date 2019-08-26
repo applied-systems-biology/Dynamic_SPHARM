@@ -116,10 +116,12 @@ def predict_classes(folder_accuracy, folder_predicted, inputfile=None, stat=None
     if stat is None:
         stat = pd.read_csv(inputfile, sep='\t', index_col=0)
     if cutoff is not None:
-        stat = stat[stat['degree'] <= cutoff]
+        curstat = stat[stat['degree'] <= cutoff]
+    else:
+        curstat = stat
 
     print('Feature extraction')
-    features, classes, names, groups, samples = classification.extract_features(stat,
+    features, classes, names, groups, samples = classification.extract_features(curstat,
                                                                                 cell_id=id_col,
                                                                                 group=group,
                                                                                 static=static,
