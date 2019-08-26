@@ -28,7 +28,7 @@ if len(args) > 0:
                                              outputfolder=path + 'output/coordinates_tracked/')
             path = path + 'output/'
             sgm.split_to_surfaces_batch(inputfolder=path + 'coordinates_tracked/',
-                                        outputfolder=path + 'surfaces/', combine_tracks=True, adjust_frame_rate=False,
+                                        outputfolder=path + 'surfaces/', combine_tracks=True, adjust_frame_rate=True,
                                         metadata_file=metadata_file)
         elif len(path.split('Synthetic')) > 1:
             kwargs = {'max_threads': 5, 'voxel_size': 1}
