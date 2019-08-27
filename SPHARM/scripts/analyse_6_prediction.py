@@ -207,18 +207,22 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
         sns.boxplot(x='Features', y='Accuracy', hue='Comparison', data=pair_stat, palette='Set1')
         sns.despine()
         plt.xlabel('')
-        ncomparisons = len(stat['Comparison'].unique())
+        plt.ylim(0, 1.05)
+        ncomparisons = len(pair_stat['Comparison'].unique())
 
         for ifeatures, feature in enumerate(pair_stat['Features'].unique()):
+            print(ifeatures, feature)
             curstat = pair_stat[pair_stat['Features'] == feature]
             control_stat = curstat[curstat['Comparison'] == 'Control']['Accuracy']
-            for icomparison, comparison in enumerate(stat['Comparison'].unique()):
+            for icomparison, comparison in enumerate(curstat['Comparison'].unique()):
+                print(icomparison, comparison)
                 if comparison != 'Control':
                     teststat = curstat[curstat['Comparison'] == comparison]['Accuracy']
                     pval = ranksums(control_stat, teststat)[1]
                     boxwidth = 0.8 / ncomparisons
                     xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
-                    plt.text(xpos, np.max(teststat) * 1.02, pvalue_to_star(pval), family='sans-serif', fontsize=8,
+                    print(xpos)
+                    plt.text(xpos, np.max(teststat) + 0.01, pvalue_to_star(pval), family='sans-serif', fontsize=8,
                              horizontalalignment='center', verticalalignment='bottom', color='black')
 
         for icomparison, comparison in enumerate(pair_stat['Comparison'].unique()):
@@ -231,7 +235,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
                         pval = ranksums(control_stat, teststat)[1]
                         boxwidth = 0.8 / ncomparisons
                         xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
-                        plt.text(xpos, np.max(teststat) * 1.06, pvalue_to_star(pval, sym='$'), family='sans-serif',
+                        plt.text(xpos, np.max(teststat) + 0.06, pvalue_to_star(pval, sym='$'), family='sans-serif',
                                  fontsize=5,
                                  horizontalalignment='center', verticalalignment='bottom', color='black')
 
@@ -242,7 +246,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
                     pval = ranksums(control_stat, teststat)[1]
                     boxwidth = 0.8 / ncomparisons
                     xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
-                    plt.text(xpos, np.max(teststat) * 1.1, pvalue_to_star(pval, sym='#'), family='sans-serif',
+                    plt.text(xpos, np.max(teststat) + 0.1, pvalue_to_star(pval, sym='#'), family='sans-serif',
                              fontsize=5,
                              horizontalalignment='center', verticalalignment='bottom', color='black')
 
@@ -277,24 +281,24 @@ if len(args) > 0:
             grouped = True
             C=100
 
-        stat = pd.read_csv(inputfile, sep='\t', index_col=0)
+        # stat = pd.read_csv(inputfile, sep='\t', index_col=0)
 
-        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
-                        dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
-                        rotation_invariant=True, C=C, grouped=grouped)
-
-        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-                        dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
-                        rotation_invariant=True, C=C, grouped=grouped)
-
-        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-                        dynamic_features='frequency', timelength=timelength, one_time_point=None,
-                        static_features='amplitude', rotation_invariant=True, C=C, grouped=grouped)
-
-        plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
+        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
+        #                 dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
+        #                 rotation_invariant=True, C=C, grouped=grouped)
+        #
+        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+        #                 dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
+        #                 rotation_invariant=True, C=C, grouped=grouped)
+        #
+        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+        #                 dynamic_features='frequency', timelength=timelength, one_time_point=None,
+        #                 static_features='amplitude', rotation_invariant=True, C=C, grouped=grouped)
+        #
+        # plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
         plot_accuracy_pairwise(path + 'prediction_accuracy/', path + 'accuracy_plots/')
 
 
