@@ -281,24 +281,24 @@ if len(args) > 0:
             grouped = True
             C=100
 
-        # stat = pd.read_csv(inputfile, sep='\t', index_col=0)
+        stat = pd.read_csv(inputfile, sep='\t', index_col=0)
 
-        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
-        #                 dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
-        #                 rotation_invariant=True, C=C, grouped=grouped)
-        #
-        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-        #                 dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
-        #                 rotation_invariant=True, C=C, grouped=grouped)
-        #
-        # predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-        #                 folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-        #                 dynamic_features='frequency', timelength=timelength, one_time_point=None,
-        #                 static_features='amplitude', rotation_invariant=True, C=C, grouped=grouped)
-        #
-        # plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
+        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
+                        dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
+                        rotation_invariant=True, C=C, grouped=grouped)
+
+        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+                        dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
+                        rotation_invariant=True, C=C, grouped=grouped)
+
+        predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
+                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+                        dynamic_features='frequency', timelength=timelength, one_time_point=None,
+                        static_features='amplitude', rotation_invariant=True, C=C, grouped=grouped)
+
+        plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
         plot_accuracy_pairwise(path + 'prediction_accuracy/', path + 'accuracy_plots/')
 
 
