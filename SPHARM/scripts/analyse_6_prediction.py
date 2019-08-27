@@ -272,8 +272,8 @@ if len(args) > 0:
 
         else:
             id_col = 'TrackID'
-            cutoff = 2
-            timelength = 5
+            cutoff = 10
+            timelength = 10
             grouped = True
             C=100
 
