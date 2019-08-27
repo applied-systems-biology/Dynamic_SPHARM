@@ -189,7 +189,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
     filelib.combine_statistics(inputfolder)
     stat = pd.DataFrame.from_csv(inputfolder[:-1] + '.csv', sep='\t')
     for i in range(len(stat)):
-        stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace('NW=6_PW=3_', '')
+        stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace('NW=6_PW=3_', '').replace('FB', 'FR')
     stat['Features'] = ''
     stat.at[stat[stat['Static'] == True].index, 'Features'] = 'Static'
     stat.at[stat[(stat['Static'] == False) & (stat['dynamic_features'] == 'time')].index, 'Features'] = 'Dynamic\n time'
