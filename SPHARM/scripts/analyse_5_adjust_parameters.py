@@ -84,7 +84,7 @@ def compare_parameters(item, inputstat, folder_accuracy, group='Group',
                                                                  timelength=timelength,
                                                                  static_features=static_features,
                                                                  rotation_invariant=rotation_invariant)[:]
-        if len(classes) > 0:
+        if len(classes) > 0 and len(np.unique(classes)) > 1:
             accuracy = pd.DataFrame()
             for C in [0.1, 1., 10., 100., 1000.]:
                 if grouped:
