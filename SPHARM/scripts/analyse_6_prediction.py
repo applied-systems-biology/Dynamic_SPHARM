@@ -142,7 +142,11 @@ def predict_classes(folder_accuracy, folder_predicted, inputfile=None, stat=None
     if len(np.unique(classes)) > 2:
         for cl in np.unique(classes):
             ind = np.where(classes != cl)
-            curaccuracy = predict_classes_pairwise(features[ind], classes[ind], groups[ind], samples[ind], C)
+            if len(samples) > 0:
+                cursamples = samples[ind]
+            else:
+                cursamples = samples
+            curaccuracy = predict_classes_pairwise(features[ind], classes[ind], groups[ind], cursamples, C)
             accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
 
     else:
