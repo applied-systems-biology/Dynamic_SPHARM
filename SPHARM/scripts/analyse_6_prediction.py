@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import pylab as plt
-from scipy.stats import ranksums
+from scipy.stats import mannwhitneyu
 from scipy import ndimage
 
 import mkl
@@ -221,7 +221,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
             for icomparison, comparison in enumerate(curstat['Comparison'].unique()):
                 if comparison != 'Control':
                     teststat = curstat[curstat['Comparison'] == comparison]['Accuracy']
-                    pval = ranksums(control_stat, teststat)[1]
+                    pval = mannwhitneyu(control_stat, teststat, alternative='less')[1]
                     boxwidth = 0.8 / ncomparisons
                     xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
                     plt.text(xpos, np.max(teststat) + 0.01, pvalue_to_star(pval), family='sans-serif', fontsize=8,
@@ -234,7 +234,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
                 for ifeatures, feature in enumerate(stat['Features'].unique()):
                     teststat = curstat[curstat['Features'] == feature]['Accuracy']
                     if np.mean(teststat) > 0.55:
-                        pval = ranksums(control_stat, teststat)[1]
+                        pval = mannwhitneyu(control_stat, teststat, alternative='less')[1]
                         boxwidth = 0.8 / ncomparisons
                         xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
                         plt.text(xpos, np.max(teststat) + 0.06, pvalue_to_star(pval, sym='$'), family='sans-serif',
@@ -245,7 +245,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
                 teststat = curstat[curstat['Features'] == 'Dynamic\n frequency']['Accuracy']
                 ifeatures = 2
                 if np.mean(teststat) > 0.55:
-                    pval = ranksums(control_stat, teststat)[1]
+                    pval = mannwhitneyu(control_stat, teststat, alternative='less')[1]
                     boxwidth = 0.8 / ncomparisons
                     xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
                     plt.text(xpos, np.max(teststat) + 0.1, pvalue_to_star(pval, sym='#'), family='sans-serif',
