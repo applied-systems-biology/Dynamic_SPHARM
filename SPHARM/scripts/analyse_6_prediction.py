@@ -41,12 +41,13 @@ def predict_classes_pairwise(features, classes, groups, samples, C):
                                                                  test_size=len(np.unique(classes)),
                                                                  groups=samples,
                                                                  random_state=0)
+        curaccuracy['Pair'] = class_names[0] + ' vs ' + class_names[1]
     else:
         curaccuracy = classification.predict_shuffle_split(features, classes, C=C,
                                                            nsplits=150, test_size=2./7, random_state=0)
+        curaccuracy['Pair'] = 'All'
 
     curaccuracy['Comparison'] = class_names[0] + ' vs ' + class_names[1]
-    curaccuracy['Pair'] = class_names[0] + ' vs ' + class_names[1]
     accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
 
     unique_classes = np.unique(classes)
@@ -102,7 +103,7 @@ def predict_classes_pairwise(features, classes, groups, samples, C):
             curaccuracy = classification.predict_shuffle_split(features, shuffled_classes, C=C,
                                                                nsplits=10, test_size=2./7, random_state=0)
             curaccuracy['Comparison'] = 'Control'
-            curaccuracy['Pair'] = 'Control'
+            curaccuracy['Pair'] = 'All'
             accuracy = pd.concat([accuracy, curaccuracy], ignore_index=True)
 
     return accuracy
@@ -215,17 +216,14 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
         ncomparisons = len(pair_stat['Comparison'].unique())
 
         for ifeatures, feature in enumerate(pair_stat['Features'].unique()):
-            print(ifeatures, feature)
             curstat = pair_stat[pair_stat['Features'] == feature]
             control_stat = curstat[curstat['Comparison'] == 'Control']['Accuracy']
             for icomparison, comparison in enumerate(curstat['Comparison'].unique()):
-                print(icomparison, comparison)
                 if comparison != 'Control':
                     teststat = curstat[curstat['Comparison'] == comparison]['Accuracy']
                     pval = ranksums(control_stat, teststat)[1]
                     boxwidth = 0.8 / ncomparisons
                     xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
-                    print(xpos)
                     plt.text(xpos, np.max(teststat) + 0.01, pvalue_to_star(pval), family='sans-serif', fontsize=8,
                              horizontalalignment='center', verticalalignment='bottom', color='black')
 
