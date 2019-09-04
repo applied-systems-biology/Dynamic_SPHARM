@@ -58,10 +58,10 @@ def extract_metadata_synthetic(inputfile, spectrum_file):
     for i, fn in enumerate(filenames):
         parts = fn.split('Time')
         nums = p.findall(parts[-2])
-        nw.append(nums[-3])
-        pw.append(nums[-4])
+        nw.append(nums[-4])
+        pw.append(nums[-5])
         fb.append(nums[-1])
-        groups.append('NW=' + nums[-3] + '_PW=' + nums[-4] + '_FB=' + nums[-1])
+        groups.append('NW=' + nums[-4] + '_PW=' + nums[-5] + '_FB=' + nums[-1])
         cellID.append(parts[-2][:-1])
         Time.append(p.findall(parts[-1])[-1])
 

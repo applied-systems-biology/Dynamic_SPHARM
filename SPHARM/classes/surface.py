@@ -315,7 +315,8 @@ class Surface(object):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none', scale_factor=0.2).scene
+            mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none',
+                                 scale_factor=0.1, mode='sphere').scene
             mesh.background = (1, 1, 1)
             mesh.magnification = 3
         return mesh
@@ -358,7 +359,7 @@ class Surface(object):
                 mesh = mlab.mesh(x * np.abs(grid), y * np.abs(grid), z * np.abs(grid), scalars=grid,
                                  colormap='jet')
             if points:
-                mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none', scale_factor=0.2)
+                mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none', scale_factor=0.05)
 
             mesh.scene.background = (1, 1, 1)
             mesh.scene.magnification = 3

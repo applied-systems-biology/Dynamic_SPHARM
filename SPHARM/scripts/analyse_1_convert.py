@@ -28,7 +28,7 @@ if len(args) > 0:
                                              outputfolder=path + 'output/coordinates_tracked/')
             path = path + 'output/'
             sgm.split_to_surfaces_batch(inputfolder=path + 'coordinates_tracked/',
-                                        outputfolder=path + 'surfaces/', combine_tracks=True, adjust_frame_rate=False,
+                                        outputfolder=path + 'surfaces/', combine_tracks=True, adjust_frame_rate=True,
                                         metadata_file=metadata_file)
         elif len(path.split('Synthetic')) > 1:
             kwargs = {'max_threads': 5, 'voxel_size': 1}
@@ -36,7 +36,7 @@ if len(args) > 0:
             prl.run_parallel(process=spharm.convert_to_tiff, inputfolder=path + 'coordinates/',
                              outputfolder=path + 'output/stacks/', extensions=['*'], debug=False, combine=False,
                              exclude=['config.xml', 'log.csv', 'runanalysis.csv',
-                                      'runstatistics.csv', 'shapeanalysis.csv'],
+                                      'runstatistics.csv', 'shapeanalysis.csv', 'tissue.csv'],
                              **kwargs)
 
             path = path + 'output/'

@@ -41,6 +41,8 @@ def compare_parameters_parallel(cutoffs, timelengths, rotation_invariant, **kwar
                     items.append([cutoff, static, dynamic_features, timelength,
                                   static_feature, rotation_invariant])
 
+    kwargs['inputstat'] = pd.read_csv(kwargs.pop('inputfile'), sep='\t', index_col=0)
+
     if kwargs.pop('debug', False) is True:
         kwargs['item'] = items[0]
         kwargs.pop('max_threads')
@@ -53,7 +55,7 @@ def compare_parameters_parallel(cutoffs, timelengths, rotation_invariant, **kwar
     filelib.combine_statistics(kwargs.get('folder_accuracy'))
 
 
-def compare_parameters(item, inputfile, folder_accuracy, group='Group', parameters=False,
+def compare_parameters(item, inputstat, folder_accuracy, group='Group',
                        id_col='TrackID', grouped=False):
     filelib.make_folders([folder_accuracy])
 
@@ -65,34 +67,31 @@ def compare_parameters(item, inputfile, folder_accuracy, group='Group', paramete
                    'Static_features': static_features,
                    'Rotation_invariant': rotation_invariant})
 
-    if parameters:
-        files = os.listdir(inputfile)
-    else:
-        files = ['']
-
-    for fn in files:
-        outputfile = folder_accuracy + fn
-        for key in params.keys():
-            outputfile += key + '=' + str(params[key]) + '_'
-        if not os.path.exists(outputfile[:-1] + '.csv'):
-            stat = pd.read_csv(inputfile + fn, sep='\t', index_col=0)
-            if cutoff is not None:
-                stat = stat[stat['degree'] <= cutoff]
-            features, classes, \
-            names, groups, samples = classification.extract_features(stat,
-                                                                     cell_id=id_col,
-                                                                     group=group,
-                                                                     static=static,
-                                                                     dynamic_features=dynamic_features,
-                                                                     timelength=timelength,
-                                                                     static_features=static_features,
-                                                                     rotation_invariant=rotation_invariant)[:]
-
+    outputfile = folder_accuracy
+    for key in params.keys():
+        outputfile += key + '=' + str(params[key]) + '_'
+    if not os.path.exists(outputfile[:-1] + '.csv'):
+        if cutoff is not None:
+            stat = inputstat[inputstat['degree'] <= cutoff]
+        else:
+            stat = inputstat
+        features, classes, \
+        names, groups, samples = classification.extract_features(stat,
+                                                                 cell_id=id_col,
+                                                                 group=group,
+                                                                 static=static,
+                                                                 dynamic_features=dynamic_features,
+                                                                 timelength=timelength,
+                                                                 static_features=static_features,
+                                                                 rotation_invariant=rotation_invariant)[:]
+        if len(classes) > 0 and len(np.unique(classes)) > 1:
             accuracy = pd.DataFrame()
             for C in [0.1, 1., 10., 100., 1000.]:
                 if grouped:
                     curaccuracy = classification.predict_group_shuffle_split(features, classes, C=C,
-                                                                             nsplits=100, test_size=1, groups=samples,
+                                                                             nsplits=100,
+                                                                             test_size=len(np.unique(classes)),
+                                                                             groups=samples,
                                                                              random_state=0)
                 else:
                     curaccuracy = classification.predict_shuffle_split(features, classes, C=C,
@@ -173,8 +172,6 @@ def plot_accuracy_selected(inputfile, outputfolder):
     stat = stat[stat['Rotation_invariant'] == True]
 
     curstat = stat[stat['Static'] == True]
-    # summary = curstat.groupby(['C', 'Cutoff']).mean().reset_index()
-    # summary = summary.sort_values(['Accuracy'], ascending=False)
 
     palette = 'Set1'
 
@@ -206,24 +203,14 @@ def plot_accuracy_selected(inputfile, outputfolder):
         plt.savefig(outputfolder + 'Dynamic_' + dyn + '.svg')
         plt.close()
 
-    summary = curstat.groupby(['C', 'Dynamic features', 'Cutoff']).mean().reset_index()
-    summary = summary.sort_values(['Accuracy'], ascending=False)
-    C = summary.iloc[0]['C']
-    # cutoff = summary.iloc[0]['Cutoff']
-    cutoff = 50
-    curstat = curstat[(curstat['C'] == C) & (curstat['Cutoff'] == cutoff)]
     plt.figure(figsize=(3, 4))
     sns.boxplot(x='Time length', y='Accuracy', hue='Dynamic_features', data=curstat, palette=palette)
     sns.despine()
     plt.xlabel('Time length (frames)')
-    # plt.ylim(0.86, 1.01)
     margins = {'left': 0.22, 'right': 0.95, 'top': 0.9, 'bottom': 0.13}
     plt.subplots_adjust(**margins)
-    summary = curstat.groupby(['Time length', 'Dynamic_features']).mean().reset_index()
-    summary = summary.sort_values(['Accuracy'], ascending=False)
-    plt.title('C = ' + str(C) + ', Cutoff = ' + str(cutoff))
-    plt.savefig(outputfolder + 'Dynamic_C=' + str(C) + '_cutoff=' + str(cutoff) + '.png')
-    plt.savefig(outputfolder + 'Dynamic_C=' + str(C) + '_cutoff=' + str(cutoff) + '.svg')
+    plt.savefig(outputfolder + 'Dynamic_Timelength.png')
+    plt.savefig(outputfolder + 'Dynamic_Timelength.svg')
     plt.close()
 
 
@@ -246,21 +233,14 @@ if len(args) > 0:
             id_col = 'TrackID'
             grouped = True
 
-        if len(path.split('parameters')) > 1:
-            parameters = True
-            inputfile = path + 'spharm/gridsize=' + str(gridsize) + '_parameters/'
-        else:
-            parameters = False
-            inputfile = path + 'spharm/gridsize=' + str(gridsize) + '.csv'
-
+        inputfile = path + 'spharm/gridsize=' + str(gridsize) + '.csv'
         rotation_invariant = True
 
         compare_parameters_parallel(inputfile=inputfile,
                                     folder_accuracy=path + 'cross_validation_accuracy/',
-                                    cutoffs=[3, 5, 10, 20, 30, 40, 50, None],
-                                    timelengths=[5, 10, 20, 30, 50, 81],
+                                    cutoffs=[1, 2, 3, 5, 10, None],
+                                    timelengths=[5, 10, 20, 30, 50, 80],
                                     max_threads=20,
-                                    parameters=parameters,
                                     id_col=id_col,
                                     rotation_invariant=rotation_invariant,
                                     debug=False, grouped=grouped)
