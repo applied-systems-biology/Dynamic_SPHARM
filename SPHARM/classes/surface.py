@@ -316,7 +316,7 @@ class Surface(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none',
-                                 scale_factor=0.1, mode='sphere').scene
+                                 scale_factor=0.1, mode='sphere', colormap='gray').scene
             mesh.background = (1, 1, 1)
             mesh.magnification = 3
         return mesh
