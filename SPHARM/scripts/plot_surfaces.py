@@ -29,9 +29,9 @@ if len(args) > 0:
                 stat = stat[stat['Time'] == t1]
                 print(fn, len(stat))
                 surface = Surface(data=stat)
-                mesh = surface.plot_points()
+                mesh = surface.plot_points(scale_factor=0.2)
                 filelib.make_folders([os.path.dirname(path + 'surface_plots/' + gr + '_' + fn[:-4])])
-                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_init.png', size=(800, 800))
+                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_init.png', size=(100, 100))
                 mlab.clf()
 
                 surface.centrate()
@@ -39,19 +39,19 @@ if len(args) > 0:
                 surface.compute_spharm(grid_size=120, normalize=True)
                 mesh = surface.plot_surface(points=False)
                 filelib.make_folders([os.path.dirname(path + 'surface_plots/' + gr + '_' + fn[:-4])])
-                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_grid.png', size=(800, 800))
+                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_grid.png', size=(100, 100))
                 mlab.clf()
 
                 surface.inverse_spharm(lmax=10)
                 mesh = surface.plot_surface(points=False)
                 filelib.make_folders([os.path.dirname(path + 'surface_plots/' + gr + '_' + fn[:-4])])
-                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_inverse_lmax=10.png', size=(800, 800))
+                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_inverse_lmax=10.png', size=(100, 100))
                 mlab.clf()
 
                 surface.inverse_spharm(lmax=None)
                 mesh = surface.plot_surface(points=False)
                 filelib.make_folders([os.path.dirname(path + 'surface_plots/' + gr + '_' + fn[:-4])])
-                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_inverse.png', size=(800, 800))
+                mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_inverse.png', size=(100, 100))
                 mlab.clf()
 
 
