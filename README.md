@@ -1,5 +1,7 @@
 # Dynamic SPHARM: software for dynamic spherical harmonic analysis
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3387142.svg)](https://doi.org/10.5281/zenodo.3387142)
+
 Author: *Anna Medyukhina*
 
 Affiliation: *Research Group Applied Systems Biology - Head: Prof. Dr. Marc Thilo Figge  
