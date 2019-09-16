@@ -304,7 +304,7 @@ class Surface(object):
 
         return grid
 
-    def plot_points(self):
+    def plot_points(self, scale_factor=0.1):
         """
         Plot a 3D view of the surface points with mayavi.
         
@@ -316,9 +316,9 @@ class Surface(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none',
-                                 scale_factor=0.1, mode='sphere').scene
+                                     scale_factor=scale_factor, mode='sphere', colormap='gray').scene
             mesh.background = (1, 1, 1)
-            mesh.magnification = 3
+            mesh.magnification = 10
         return mesh
 
     def plot_surface(self, points=False, extent=None):
@@ -362,7 +362,7 @@ class Surface(object):
                 mesh = mlab.points3d(self.x, self.y, self.z, self.z, scale_mode='none', scale_factor=0.05)
 
             mesh.scene.background = (1, 1, 1)
-            mesh.scene.magnification = 3
+            mesh.scene.magnification = 10
             return mesh.scene
 
     def compute_spharm(self, grid_size=None, normalize=False, normalization_method='zero-component', ri=False):
