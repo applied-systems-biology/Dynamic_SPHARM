@@ -62,7 +62,7 @@ def extract_surfaces(**kwargs):
     if channelcodes is None or channel is not None:
         stack = ImageStack(inputfolder + filename)
         metadata = pd.read_csv(inputfolder + filename[:-4] + '.txt',
-                               sep='\t', index_col=0, header=-1).transpose().iloc[0].T.squeeze()
+                               sep='\t', index_col=0, header=None).transpose().iloc[0].T.squeeze()
         min_coord = None
         if 'min_x' in metadata.index and 'min_y' in metadata.index and 'min_z' in metadata.index:
             min_coord = [metadata['min_z'], metadata['min_y'], metadata['min_x']]
