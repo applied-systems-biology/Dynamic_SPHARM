@@ -421,7 +421,8 @@ def plot_mean_abs_derivative(inputfile, outputfolder, group='Group', cutoff=None
     filelib.make_folders([os.path.dirname(outputfolder)])
     if not os.path.exists(inputfile[:-4] + '_mean_abs_derivative.csv'):
         stat = pd.read_csv(inputfile, sep='\t', index_col=0)
-        stat.loc[:, 'Time'] = np.int_(np.round_(stat['Time'] / 10.)) * 10
+        if id_col == 'CellID':
+            stat.loc[:, 'Time'] = np.int_(np.round_(stat['Time'] / 10.)) * 10
         nstat = pd.DataFrame()
         if cutoff is not None:
             stat = stat[stat['degree'] <= cutoff]
@@ -429,6 +430,7 @@ def plot_mean_abs_derivative(inputfile, outputfolder, group='Group', cutoff=None
             substat = stat[stat[group] == gr]
             for id in substat[id_col].unique():
                 subsubstat = substat[substat[id_col] == id]
+                subsubstat = subsubstat.sort_values('Time')
                 time_spectrum = TimeSpectrum()
                 for t in subsubstat['Time'].unique():
                     sp = Spectrum()
