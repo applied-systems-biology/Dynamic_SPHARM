@@ -40,6 +40,11 @@ if len(args) > 0:
             path += '/'
         path += 'output/'
 
+        if len(path.split('Synthetic')) > 1:
+            id_col = 'CellID'
+        else:
+            id_col = 'TrackID'
+
         filename = path + 'spharm/gridsize=' + str(gridsize) + '.csv'
         plt.plot_average_heatmaps(inputfile=filename, cutoff=5, logscale=True,
                                   outputfolder=path + 'plots/average_heatmaps/gridsize=' + str(gridsize) + '_')
@@ -47,8 +52,8 @@ if len(args) > 0:
                                  outputfolder=path + 'plots/average_spectra/gridsize=' + str(gridsize) + '_')
         plt.plot_average_frequency_heatmaps(inputfile=filename, cutoff=10, logscale=True,
                                             outputfolder=path + 'plots/average_frequency_heatmaps/gridsize=' + str(
-                                                gridsize) + '_')
-        plt.plot_mean_abs_derivative(inputfile=filename, cutoff=10,
+                                                gridsize) + '_', id_col=id_col)
+        plt.plot_mean_abs_derivative(inputfile=filename, cutoff=10, id_col=id_col,
                                      outputfolder=path + 'plots/average_abs_derivative/gridsize=' + str(gridsize) + '_')
         plt.plot_inverse_shapes(inputfile=filename,
                                 outputfolder=path + 'plots/inverse_shapes/gridsize=' + str(gridsize) + '_')
