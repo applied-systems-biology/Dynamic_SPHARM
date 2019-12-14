@@ -45,7 +45,7 @@ class TestSpectrumClass(unittest.TestCase):
     def test_from_surface_norm2(self, case):
         sp = Spectrum()
         harm = sp.from_surface(surface=case, normalize=True, normalization_method='mean-radius')
-        self.assertEqual(np.max(harm), 1)
+        self.assertAlmostEqual(abs(np.max(harm)), 1, 8)
 
     def test_convertion(self):
         sp = Spectrum()
