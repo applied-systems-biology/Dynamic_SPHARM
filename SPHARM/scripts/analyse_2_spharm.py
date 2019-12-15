@@ -53,6 +53,7 @@ def extract_metadata_synthetic(inputfile, spectrum_file):
     nw = []
     pw = []
     fb = []
+    dw = []
     p = re.compile('\d*\.*\d+')
 
     for i, fn in enumerate(filenames):
@@ -61,7 +62,8 @@ def extract_metadata_synthetic(inputfile, spectrum_file):
         nw.append(nums[-4])
         pw.append(nums[-5])
         fb.append(nums[-1])
-        groups.append('NW=' + nums[-4] + '_PW=' + nums[-5] + '_FB=' + nums[-1])
+        dw.append(nums[-3])
+        groups.append('NW=' + nums[-4] + '_PW=' + nums[-5] + '_DW=' + nums[-3] + '_FB=' + nums[-1])
         cellID.append(parts[-2][:-1])
         Time.append(p.findall(parts[-1])[-1])
 
@@ -75,18 +77,19 @@ def extract_metadata_synthetic(inputfile, spectrum_file):
     stat['Time'] = Time
     stat['NWeight'] = nw
     stat['PosWeight'] = pw
+    stat['DistWeight'] = dw
     stat['FrontBack'] = fb
     stat.to_csv(inputfile, sep='\t')
 
     # compute frequency spectrum
     stat['value'] = np.array(stat['real']) + np.array(stat['imag'])*1j
     stat = stat.groupby(['Group', 'Name', 'CellID', 'Time', 'degree',
-                         'NWeight', 'PosWeight', 'FrontBack']).sum().reset_index()
+                         'NWeight', 'PosWeight', 'FrontBack', 'DistWeight']).sum().reset_index()
     stat['amplitude'] = np.sqrt(stat['power'])
 
     stat.to_csv(spectrum_file, sep='\t')
 
-
+    
 def split_parameters(filename, outputfolder):
     filelib.make_folders([outputfolder])
     stat = pd.read_csv(filename, sep='\t', index_col=0)
