@@ -166,7 +166,7 @@ def predict_classes(folder_accuracy, folder_predicted, inputfile=None, stat=None
         results.to_csv(outputfile[:-1] + '.csv', sep='\t')
 
 
-def plot_confusion_matrix(inputfolder, outputfolder):
+def plot_confusion_matrix(inputfolder, outputfolder, text_to_replace):
     filelib.make_folders([outputfolder])
     files = filelib.list_subfolders(inputfolder, extensions=['csv'])
     for fn in files:
@@ -175,7 +175,9 @@ def plot_confusion_matrix(inputfolder, outputfolder):
         cl_frame = pd.DataFrame({'Class name': classes})
         for i in range(len(cl_frame)):
             cl_frame.at[i, 'Class code'] = stat[stat['Group'] == cl_frame.iloc[i]['Class name']]['Actual class'].iloc[0]
-            cl_frame.at[i, 'Class name'] = cl_frame.iloc[i]['Class name'].replace('NW=6_PW=3_', '')
+            cl_frame.at[i, 'Class name'] = cl_frame.iloc[i]['Class name'].replace('FB', 'FR')
+            for text in text_to_replace:
+                cl_frame.at[i, 'Class name'] = cl_frame.iloc[i]['Class name'].replace(text, '')
         cl_frame = cl_frame.sort_values('Class name')
         cl_frame['New class code'] = np.arange((len(cl_frame)))
 
@@ -189,12 +191,14 @@ def plot_confusion_matrix(inputfolder, outputfolder):
         plt.close()
 
 
-def plot_accuracy_pairwise(inputfolder, outputfolder):
+def plot_accuracy_pairwise(inputfolder, outputfolder, text_to_replace):
     filelib.make_folders([outputfolder])
     filelib.combine_statistics(inputfolder)
     stat = pd.read_csv(inputfolder[:-1] + '.csv', sep='\t')
     for i in range(len(stat)):
-        stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace('NW=4_PW=4_', '').replace('FB', 'FR')
+        stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace('FB', 'FR')
+        for text in text_to_replace:
+            stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace(text, '')
     stat['Features'] = ''
     stat.at[stat[stat['Static'] == True].index, 'Features'] = 'Static'
     stat.at[stat[(stat['Static'] == False) & (stat['dynamic_features'] == 'time')].index, 'Features'] = 'Dynamic\n time'
@@ -212,7 +216,7 @@ def plot_accuracy_pairwise(inputfolder, outputfolder):
         sns.boxplot(x='Features', y='Accuracy', hue='Comparison', data=pair_stat, palette='Set1')
         sns.despine()
         plt.xlabel('')
-        plt.ylim(0, 1.05)
+        plt.ylim(-0.1, 1.05)
         ncomparisons = len(pair_stat['Comparison'].unique())
 
         for ifeatures, feature in enumerate(pair_stat['Features'].unique()):
@@ -266,6 +270,10 @@ gridsize = 120
 args = sys.argv[1:]
 if len(args) > 0:
     path = args[0]
+    if len(args) > 1:
+        text_to_replace = args[1:]
+    else:
+        text_to_replace = []
     if path != 'test':
         if not path.endswith('/'):
             path += '/'
@@ -289,22 +297,21 @@ if len(args) > 0:
         stat = pd.read_csv(inputfile, sep='\t', index_col=0)
 
         predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
-                        dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
-                        rotation_invariant=True, C=C[0], grouped=grouped)
+                       folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=True,
+                       dynamic_features=None, timelength=None, one_time_point=True, static_features='amplitude',
+                       rotation_invariant=True, C=C[0], grouped=grouped)
 
         predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-                        dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
-                        rotation_invariant=True, C=C[1], grouped=grouped)
+                       folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+                       dynamic_features='time', timelength=timelength, one_time_point=None, static_features='amplitude',
+                       rotation_invariant=True, C=C[1], grouped=grouped)
 
         predict_classes(stat=stat, folder_accuracy=path + 'prediction_accuracy/',
-                        folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
-                        dynamic_features='frequency', timelength=timelength, one_time_point=None,
-                        static_features='amplitude', rotation_invariant=True, C=C[2], grouped=grouped)
+                       folder_predicted=path + 'predicted_classes/', id_col=id_col, cutoff=cutoff, static=False,
+                       dynamic_features='frequency', timelength=timelength, one_time_point=None,
+                       static_features='amplitude', rotation_invariant=True, C=C[2], grouped=grouped)
 
-        plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/')
-        plot_accuracy_pairwise(path + 'prediction_accuracy/', path + 'accuracy_plots/')
-
+        plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/', text_to_replace)
+        plot_accuracy_pairwise(path + 'prediction_accuracy/', path + 'accuracy_plots/', text_to_replace)
 
 
