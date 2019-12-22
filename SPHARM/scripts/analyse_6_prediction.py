@@ -200,10 +200,11 @@ def plot_accuracy_pairwise(inputfolder, outputfolder, text_to_replace):
         for text in text_to_replace:
             stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace(text, '')
     stat['Features'] = ''
-    stat.at[stat[stat['Static'] == True].index, 'Features'] = 'Static'
+    stat.at[stat[(stat['Static'] == True)&(stat['one_time_point'] == 1)].index, 'Features'] = 'Static'
     stat.at[stat[(stat['Static'] == False) & (stat['dynamic_features'] == 'time')].index, 'Features'] = 'Dynamic\n time'
     stat.at[stat[(stat['Static'] == False)
                  & (stat['dynamic_features'] == 'frequency')].index, 'Features'] = 'Dynamic\n frequency'
+    stat = stat[stat['Features'] != ''].reset_index(drop=True)
 
     stat = stat.sort_values(['Features', 'Comparison'], ascending=False)
 
@@ -264,6 +265,67 @@ def plot_accuracy_pairwise(inputfolder, outputfolder, text_to_replace):
         plt.close()
 
 
+def plot_accuracy_pairwise_static(inputfolder, outputfolder, text_to_replace):
+    filelib.make_folders([outputfolder])
+    filelib.combine_statistics(inputfolder)
+    stat = pd.read_csv(inputfolder[:-1] + '.csv', sep='\t')
+    stat = stat[stat['Static'] == True].reset_index(drop=True)
+    for i in range(len(stat)):
+        stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace('FB', 'FR')
+        for text in text_to_replace:
+            stat.at[i, 'Comparison'] = stat.iloc[i]['Comparison'].replace(text, '')
+ 
+    stat['Features'] = ''
+    stat.at[stat[(stat['Static'] == True)&(stat['one_time_point'] == 1)].index, 'Features'] = 'One time point'
+    stat.at[stat[(stat['Static'] == True)&(stat['one_time_point'] == 0)].index, 'Features'] = 'All time points'
+
+    stat = stat.sort_values(['Features', 'Comparison'], ascending=False)
+
+    for pair in stat['Pair'].unique():
+        pair_stat = stat[stat['Pair'] == pair]
+
+        plt.figure(figsize=(4, 4))
+        margins = {'left': 0.2, 'right': 0.95, 'top': 0.9, 'bottom': 0.13}
+        plt.subplots_adjust(**margins)
+        sns.boxplot(x='Features', y='Accuracy', hue='Comparison', data=pair_stat, palette='Set1')
+        sns.despine()
+        plt.xlabel('')
+        plt.ylim(-0.1, 1.05)
+        ncomparisons = len(pair_stat['Comparison'].unique())
+
+        for ifeatures, feature in enumerate(pair_stat['Features'].unique()):
+            curstat = pair_stat[pair_stat['Features'] == feature]
+            control_stat = np.array(curstat[curstat['Comparison'] == 'Control']['Accuracy'])
+            for icomparison, comparison in enumerate(curstat['Comparison'].unique()):
+                if comparison != 'Control':
+                    teststat = np.array(curstat[curstat['Comparison'] == comparison]['Accuracy'])
+                    if not (control_stat == teststat).all():
+                        pval = mannwhitneyu(control_stat, teststat, alternative='less')[1]
+                        boxwidth = 0.8 / ncomparisons
+                        xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
+                        plt.text(xpos, np.max(teststat) + 0.01, pvalue_to_star(pval), family='sans-serif', fontsize=8,
+                                 horizontalalignment='center', verticalalignment='bottom', color='black')
+
+        for icomparison, comparison in enumerate(pair_stat['Comparison'].unique()):
+            if comparison != 'Control':
+                curstat = pair_stat[pair_stat['Comparison'] == comparison]
+                control_stat = np.array(curstat[curstat['Features'] == 'One time point']['Accuracy'])
+                for ifeatures, feature in enumerate(stat['Features'].unique()):
+                    teststat = np.array(curstat[curstat['Features'] == feature]['Accuracy'])
+                    if np.mean(teststat) > 0.55:
+                        if not (control_stat == teststat).all():
+                            pval = mannwhitneyu(control_stat, teststat)[1]
+                            boxwidth = 0.8 / ncomparisons
+                            xpos = ifeatures - boxwidth * ncomparisons / 2 + boxwidth / 2 + icomparison * boxwidth
+                            plt.text(xpos, np.max(teststat) + 0.06, pvalue_to_star(pval, sym='$'), family='sans-serif',
+                                     fontsize=5,
+                                     horizontalalignment='center', verticalalignment='bottom', color='black')
+
+
+        plt.savefig(outputfolder + 'accuracy_pairwise_comparison_' + pair + '_static.png', dpi=300)
+        plt.savefig(outputfolder + 'accuracy_pairwise_comparison_' + pair + '_static.svg')
+        plt.close()
+
 gridsize = 120
 
 #################################
@@ -313,5 +375,5 @@ if len(args) > 0:
 
         plot_confusion_matrix(path + 'predicted_classes/', path + 'confusion_matrix/', text_to_replace)
         plot_accuracy_pairwise(path + 'prediction_accuracy/', path + 'accuracy_plots/', text_to_replace)
-
+        plot_accuracy_pairwise_static(path + 'prediction_accuracy/', path + 'accuracy_plots/', text_to_replace)
 
