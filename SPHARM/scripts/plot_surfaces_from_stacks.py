@@ -21,24 +21,24 @@ if len(args) > 0:
 
         track_stat = pd.DataFrame()
         summary_stat = pd.DataFrame()
-        # groups = os.listdir(path + 'stacks/')
-        # for gr in groups:
-        #     print(gr)
-        #     files = os.listdir(path + 'stacks/' + gr + '/')
-        #     for fn in files:
-        #         print(fn)
-        #         stack = ImageStack(path + 'stacks/' + gr + '/' + fn)
-        #         stack.filename = fn
-        #         stack.extract_surfaces(path + 'surfaces/' + gr + '/', voxel_size=0.3)
-
-        groups = os.listdir(path + 'surfaces1/')
+        groups = os.listdir(path + 'stacks/')
         for gr in groups:
             print(gr)
-            files = os.listdir(path + 'surfaces1/' + gr + '/')
+            files = os.listdir(path + 'stacks/' + gr + '/')
+            for fn in files:
+                print(fn)
+                stack = ImageStack(path + 'stacks/' + gr + '/' + fn)
+                stack.filename = fn
+                stack.extract_surfaces(path + 'surfaces/' + gr + '/', voxel_size=0.3)
+
+        groups = os.listdir(path + 'surfaces/')
+        for gr in groups:
+            print(gr)
+            files = os.listdir(path + 'surfaces/' + gr + '/')
             files.sort()
             for fn in files:
                 print(fn)
-                surface = Surface(filename=path + 'surfaces1/' + gr + '/' + fn, voxel_size=0.3)
+                surface = Surface(filename=path + 'surfaces/' + gr + '/' + fn, voxel_size=0.3)
                 mesh = mlab.points3d(surface.x, surface.y, surface.z, surface.x, scale_mode='none',
                                      scale_factor=0.5, mode='sphere', colormap='jet').scene
                 mesh.background = (1, 1, 1)
@@ -67,22 +67,5 @@ if len(args) > 0:
                 filelib.make_folders([os.path.dirname(path + 'surface_plots/' + gr + '_' + fn[:-4])])
                 mesh.save(path + 'surface_plots/' + gr + '_' + fn[:-4] + '_init.png', size=(100, 100))
                 mlab.clf()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
