@@ -15,3 +15,7 @@ Adolf-Reichwein-Straße 23, 07745 Jena, Germany*
 
 The source code of this framework is released under the <a href="/LICENSE">3-clause BSD license</a>
 
+## Citation
+
+A. Medyukhina, M. Blickensdorf, Z. Cseresnyés, N. Ruef, J.V. Stein, M.T. Figge. Dynamic spherical harmonics approach for shape classification of migrating cells. Sci Rep 10, 6072 (2020) [https://doi.org/10.1038/s41598-020-62997-7](https://doi.org/10.1038/s41598-020-62997-7)
+
